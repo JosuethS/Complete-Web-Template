@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+type AnalyticsDeviceType {
+  android Int
+  desktop Int
+  ios     Int
+  mobile  Int
+  tablet  Int
+}
+
+type AnalyticsReferalSource {
+  direct    Int
+  facebook  Int
+  google    Int
+  instagram Int
+  youtube   Int
+}
+
+type BookingsBookingDate {
+  day   Int
+  month Int
+  year  Int
+}
+
+type BookingsCreatedDate {
+  day   Int
+  month Int
+  year  Int
+}
+
+type NotificationsDate {
+  day   Int
+  month Int
+  year  Int
+}
+
+type OffDaysDate {
+  day   Int
+  month Int
+  year  Int
+}
+
+model Analytics {
+  id               String                 @id @default(auto()) @map("_id") @db.ObjectId
+  device_type      AnalyticsDeviceType    @map("device-type")
+  new_visitors     Int                    @map("new-visitors")
+  referal_source   AnalyticsReferalSource @map("referal-source")
+  session_duration Int                    @map("session-duration")
+  total_visitors   Int                    @map("total-visitors")
+}
+
+model Bookings {
+  id           String              @id @default(auto()) @map("_id") @db.ObjectId
+  address      String
+  amount       Int
+  booking_date BookingsBookingDate
+  created_date BookingsCreatedDate
+  email        String
+  name         String
+  number       Int
+  services     String[]
+  time         String
+}
+
+model Notifications {
+  id   String            @id @default(auto()) @map("_id") @db.ObjectId
+  Noti String
+  date NotificationsDate
+}
+
+model Off_Days {
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  date        OffDaysDate
+  description String
+  time        String
+
+  @@map("Off-Days")
+}
