@@ -22,7 +22,7 @@ const Analytics = {
   },
 
   detectReferrer() {
-    const r = (document.referrer || "").toLowerCase();
+    const r = (navigator.referrer || "").toLowerCase();
     if (r.includes("facebook.com")) return "facebook";
     if (r.includes("youtube.com")) return "youtube";
     if (r.includes("instagram.com")) return "instagram";

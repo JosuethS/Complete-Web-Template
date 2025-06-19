@@ -6,14 +6,12 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  LiveReload,
+  useLoaderData,
 } from "@remix-run/react";
 import { useEffect } from "react";
-import Analytics from "./utils/analytics/analytics";
-import analyticsData from './utils/analytics/analytics'
 import "./tailwind.css";
-import { useLoaderData } from "@remix-run/react";
-
-
+import { trackAnalytics } from "./api/analytics";
 
 
 export const links = () => [
@@ -29,7 +27,16 @@ export const links = () => [
   },
 ];
 
-function Layout({ children }) {
+
+// Running the analytics tracker 
+export const loader = async ({request}) => {
+  await trackAnalytics({request});
+  return ({status: true});
+}
+
+
+export default function App() {
+  
   return (
     <html lang="en">
       <head>
@@ -39,23 +46,10 @@ function Layout({ children }) {
         <Links />
       </head>
       <body>
-        {children}
+        <Outlet />
         <ScrollRestoration />
         <Scripts />
       </body>
     </html>
-  );
-}
-
-export default function App() {
-  useEffect(() => {
-    Analytics.initialize();
-    console.log(analyticsData.webData);
-  }, []);
-
-  return (
-    <Layout>
-      <Outlet />
-    </Layout>
   );
 }

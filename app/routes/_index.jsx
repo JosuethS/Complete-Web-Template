@@ -1,8 +1,9 @@
 // app/routes/index.jsx
+import { useLoaderData } from "@remix-run/react";
 import { useEffect, useState } from "react";
-import Analytics, { analyticsData } from "../utils/analytics/analytics";
-import { useFetcher } from "@remix-run/react";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from '../utils/prisma.server'
+import 'dotenv/config';
+
 
 export const meta = () => {
   return [
@@ -11,82 +12,41 @@ export const meta = () => {
   ];
 };
 
+export async function loader({ request }) {
+  const analytics = await prisma.analytics.findUnique({
+    where: { id: process.env.ANALYTICS_ID }
+  });
 
-
-const prisma = new PrismaClient();
-
-
-
-export const action = async ({ request }) => {
-  const formData = await request.formData();
-  const analytics = formData.get("data");
-
-  console.log(analytics)
-
-
-
-  return {ok: true}
+  return (analytics);
 }
 
 export default function Index() {
-  // mirror analyticsData into React state
-  const [metrics, setMetrics] = useState({
-    totalViews: 0,
-    newVisitors: 0,
-    sessionDuration: 0,
-    deviceType: {},
-    referrers: {},
-  });
+  const data = useLoaderData();
+  const [metrics, setMetrics] = useState(data);
 
-  const fetcher = useFetcher();
+  useEffect(() => {
+    let id = localStorage.getItem("visitorId");
+    let isReturning = true;
 
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem("visitorId", id);
+      isReturning = false;
+    }
 
-   useEffect( () => {
-    // kick off analytics tracking
-    Analytics.initialize();
-
-    
-
-    // poll every 2s for updates
-    const interval = setInterval(() => {
-      setMetrics({
-        totalViews: analyticsData.totalViews,
-        newVisitors: analyticsData.newVisitors,
-        sessionDuration: analyticsData.sessionDuration,
-        deviceType: { ...analyticsData.deviceType },
-        referrers:  { ...analyticsData.referrers },
+    fetch("/api/track", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isReturning }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("✅ Analytics updated:", data);
+      })
+      .catch((err) => {
+        console.error("❌ Tracking error:", err.message);
       });
-
-      const update = async() => {
-        await prisma.Analytics.update({
-                where: {
-                  id: "67e33232778642571f666ddf",
-                },
-                data: {
-                  total_visitors: analytics.newVisitors,
-                  new_visitors: analytics.totalViews,
-                  session_duration: analytics.sessionDuration,
-                  device_type: {...analytics.deviceType},
-                  referal_source: {...analytics.referrers},
-                },
-              });
-      } 
-
-      update()
-
-      fetcher.submit(
-        { 
-          data: analyticsData 
-        }, 
-        { 
-          action: "/" 
-        });
-    }, 2000);
-
-    return () => clearInterval(interval);
   }, []);
-
-  
 
   return (
     <div className="flex h-screen items-center justify-center">
@@ -103,14 +63,14 @@ export default function Index() {
           <h2 className="mb-4 text-xl font-semibold">Live Analytics</h2>
           <ul className="space-y-2">
             <li>
-              <strong>Total Views:</strong> {metrics.totalViews}
+              <strong>Total Views:</strong> {metrics.total_visitors}
             </li>
             <li>
-              <strong>New Visitors:</strong> {metrics.newVisitors}
+              <strong>New Visitors:</strong> {metrics.new_visitors}
             </li>
             <li>
-              <strong>Session Duration:</strong> {metrics.sessionDuration}{" "}
-              minute{metrics.sessionDuration !== 1 ? "s" : ""}
+              <strong>Session Duration:</strong> {metrics.session_duration}{" "}
+              minute{metrics.session_duration !== 1 ? "s" : ""}
             </li>
           </ul>
 
@@ -118,7 +78,7 @@ export default function Index() {
             <div>
               <h3 className="font-medium">By Device</h3>
               <ul className="mt-2 space-y-1 text-sm">
-                {Object.entries(metrics.deviceType).map(([device, count]) => (
+                {Object.entries(metrics.device_type).map(([device, count]) => (
                   <li key={device}>
                     {device.charAt(0).toUpperCase() + device.slice(1)}:{" "}
                     {count}
@@ -129,7 +89,7 @@ export default function Index() {
             <div>
               <h3 className="font-medium">By Referrer</h3>
               <ul className="mt-2 space-y-1 text-sm">
-                {Object.entries(metrics.referrers).map(([ref, count]) => (
+                {Object.entries(metrics.referral_source).map(([ref, count]) => (
                   <li key={ref}>
                     {ref.charAt(0).toUpperCase() + ref.slice(1)}: {count}
                   </li>

@@ -15,7 +15,7 @@ type AnalyticsDeviceType {
   tablet  Int
 }
 
-type AnalyticsReferalSource {
+type AnalyticsReferralSource {
   direct    Int
   facebook  Int
   google    Int
@@ -48,12 +48,12 @@ type OffDaysDate {
 }
 
 model Analytics {
-  id               String                 @id @default(auto()) @map("_id") @db.ObjectId
-  device_type      AnalyticsDeviceType    @map("device-type")
-  new_visitors     Int                    @map("new-visitors")
-  referal_source   AnalyticsReferalSource @map("referal-source")
-  session_duration Int                    @map("session-duration")
-  total_visitors   Int                    @map("total-visitors")
+  id               String                  @id @default(auto()) @map("_id") @db.ObjectId
+  device_type      AnalyticsDeviceType     @map("device-type")
+  new_visitors     Int                  @map("new-visitors")
+  referral_source  AnalyticsReferralSource @map("referral-source")
+  session_duration Int                  @map("session-duration")
+  total_visitors   Int                  @map("total-visitors")
 }
 
 model Bookings {
