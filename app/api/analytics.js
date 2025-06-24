@@ -77,7 +77,8 @@ export async function trackAnalytics({ request }) {
 }
 
 
-export const action = async ({ request }) => {
+export async function action ({ request }) {
+
   const { isReturning } = await request.json();
 
   console.log("Checking for new User on this website...")
@@ -90,5 +91,4 @@ export const action = async ({ request }) => {
     },
   });
 
-  return json({ status: "ok" });
 };

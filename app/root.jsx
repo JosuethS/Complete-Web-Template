@@ -36,6 +36,20 @@ export const loader = async ({request}) => {
 
 
 export default function App() {
+
+  useEffect(() => {
+    console.log("useEffect is working!!!!!!!!!")
+
+    let start = Date.now()
+    window.addEventListener('beforeunload', async () => {
+      const duration = Math.round((Date.now() - start) / 60000)
+      console.log(`this is the duration: ${duration}`)
+      await fetch('/api/track-duration', {
+        method: 'POST',
+        body: JSON.stringify({ duration }),
+      })
+    })
+  }, [])
   
   return (
     <html lang="en">

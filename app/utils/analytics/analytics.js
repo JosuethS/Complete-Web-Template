@@ -17,7 +17,7 @@ const Analytics = {
     if (/iPad/i.test(ua)) return "tablet";
     if (/iPhone|iPod/i.test(ua)) return "ios";
     if (/Android/i.test(ua)) return "android";
-    if (/Mobi|Android/i.test(ua)) return "mobile";
+    if (/Mobile|Android/i.test(ua)) return "mobile";
     return "desktop";
   },
 
