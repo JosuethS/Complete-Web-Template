@@ -1,7 +1,6 @@
 import { useLoaderData } from "@remix-run/react";
 import { useEffect, useState } from "react";
 import { prisma } from '../utils/prisma.server';
-import 'dotenv/config';
 
 export const meta = () => {
   return [
@@ -29,39 +28,7 @@ export default function Index() {
 
   const [metrics, setMetrics] = useState(data);
 
-  useEffect(() => {
-    let id = localStorage.getItem("visitorId");
-    let isReturning = true;
-
-    if (!id) {
-      id = crypto.randomUUID();
-      localStorage.setItem("visitorId", id);
-      isReturning = false;
-    }
-
   
-    fetch("/api/track", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isReturning }),
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error(`Status ${res.status}`);
-        return res.json();
-      })
-      .then((updatedAnalytics) => {
-        console.log("✅ Analytics updated:", updatedAnalytics);
-
-        if (updatedAnalytics && typeof updatedAnalytics === 'object') {
-          setMetrics((prev) => ({ ...prev, ...updatedAnalytics }));
-        }
-      })
-      .catch((err) => {
-        console.error("❌ Tracking error:", err.message);
-      });
-  }, []);
-
-
   const totalVisitors = metrics.total_visitors ?? metrics.totalVisitors ?? 0;
   const newVisitors = metrics.new_visitors ?? metrics.newVisitors ?? 0;
   const sessionDuration = metrics.session_duration ?? 0;

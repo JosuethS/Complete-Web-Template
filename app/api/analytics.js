@@ -63,23 +63,3 @@ export async function trackAnalytics({ request }) {
     console.error("Error tracking analytics:", error);
   }
 }
-
-export async function action({ request }) {
-  try {
-    const body = await request.json();
-    const isReturning = body.isReturning;
-
-    console.log("Checking for new user on this website...");
-
-    await prisma.analytics.update({
-      where: { id: process.env.ANALYTICS_ID },
-      data: {
-        totalViews: { increment: 1 },
-        ...(isReturning ? {} : { newVisitors: { increment: 1 } }),
-      },
-    });
-    
-  } catch (error) {
-    console.error("Error in analytics action:", error);
-  }
-}

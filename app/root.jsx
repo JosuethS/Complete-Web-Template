@@ -37,19 +37,28 @@ export const loader = async ({request}) => {
 
 export default function App() {
 
-  useEffect(() => {
-    console.log("useEffect is working!!!!!!!!!")
+useEffect(() => {
+  console.log("useEffect is working!!!!!!!!!");
 
-    let start = Date.now()
-    window.addEventListener('beforeunload', async () => {
-      const duration = Math.round((Date.now() - start) / 60000)
-      console.log(`this is the duration: ${duration}`)
-      await fetch('/api/track-duration', {
-        method: 'POST',
-        body: JSON.stringify({ duration }),
-      })
-    })
-  }, [])
+  const start = Date.now();
+
+  const handleBeforeUnload = () => {
+    const duration = Math.round((Date.now() - start) / 60000);
+    console.log(`this is the duration: ${duration}`);
+
+    const data = JSON.stringify({ duration });
+    const blob = new Blob([data], { type: "application/json" });
+
+    navigator.sendBeacon('/api/track-duration', blob);
+  };
+
+  window.addEventListener('beforeunload', handleBeforeUnload);
+
+  return () => {
+    window.removeEventListener('beforeunload', handleBeforeUnload);
+  };
+}, []);
+
   
   return (
     <html lang="en">
