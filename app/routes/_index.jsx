@@ -1,9 +1,7 @@
-// app/routes/index.jsx
 import { useLoaderData } from "@remix-run/react";
 import { useEffect, useState } from "react";
-import { prisma } from '../utils/prisma.server'
+import { prisma } from '../utils/prisma.server';
 import 'dotenv/config';
-
 
 export const meta = () => {
   return [
@@ -13,18 +11,30 @@ export const meta = () => {
 };
 
 export async function loader({ request }) {
+  // Fetch analytics from DB by ID
   const analytics = await prisma.analytics.findUnique({
-    where: { id: process.env.ANALYTICS_ID }
+    where: { id: process.env.ANALYTICS_ID },
   });
 
-  return (analytics);
+  // Provide defaults if analytics record missing (for safety)
+  return analytics ?? {
+    total_visitors: 0,
+    newVisitors: 0,
+    session_duration: 0,
+    device_type: {},
+    referral_source: {},
+  };
 }
 
 export default function Index() {
+  // Load initial analytics data from server loader
   const data = useLoaderData();
+
+  // Use state to allow live updates if needed
   const [metrics, setMetrics] = useState(data);
 
   useEffect(() => {
+    // Visitor ID logic to determine new or returning visitor
     let id = localStorage.getItem("visitorId");
     let isReturning = true;
 
@@ -34,19 +44,35 @@ export default function Index() {
       isReturning = false;
     }
 
+    // POST to /api/track to update analytics counters
     fetch("/api/track", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ isReturning }),
     })
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("✅ Analytics updated:", data);
+      .then((res) => {
+        if (!res.ok) throw new Error(`Status ${res.status}`);
+        return res.json();
+      })
+      .then((updatedAnalytics) => {
+        console.log("✅ Analytics updated:", updatedAnalytics);
+
+        // Optionally update UI with latest data from response if sent back
+        if (updatedAnalytics && typeof updatedAnalytics === 'object') {
+          setMetrics((prev) => ({ ...prev, ...updatedAnalytics }));
+        }
       })
       .catch((err) => {
         console.error("❌ Tracking error:", err.message);
       });
   }, []);
+
+  // Helper to safely get values with fallback
+  const totalVisitors = metrics.total_visitors ?? metrics.totalVisitors ?? 0;
+  const newVisitors = metrics.new_visitors ?? metrics.newVisitors ?? 0;
+  const sessionDuration = metrics.session_duration ?? 0;
+  const deviceType = metrics.device_type ?? {};
+  const referralSource = metrics.referral_source ?? {};
 
   return (
     <div className="flex h-screen items-center justify-center">
@@ -63,14 +89,14 @@ export default function Index() {
           <h2 className="mb-4 text-xl font-semibold">Live Analytics</h2>
           <ul className="space-y-2">
             <li>
-              <strong>Total Views:</strong> {metrics.total_visitors}
+              <strong>Total Views:</strong> {totalVisitors}
             </li>
             <li>
-              <strong>New Visitors:</strong> {metrics.new_visitors}
+              <strong>New Visitors:</strong> {newVisitors}
             </li>
             <li>
-              <strong>Session Duration:</strong> {metrics.session_duration}{" "}
-              minute{metrics.session_duration !== 1 ? "s" : ""}
+              <strong>Session Duration:</strong> {sessionDuration}{" "}
+              minute{sessionDuration !== 1 ? "s" : ""}
             </li>
           </ul>
 
@@ -78,53 +104,34 @@ export default function Index() {
             <div>
               <h3 className="font-medium">By Device</h3>
               <ul className="mt-2 space-y-1 text-sm">
-                {Object.entries(metrics.device_type).map(([device, count]) => (
-                  <li key={device}>
-                    {device.charAt(0).toUpperCase() + device.slice(1)}:{" "}
-                    {count}
-                  </li>
-                ))}
+                {Object.entries(deviceType).length === 0 ? (
+                  <li>No data</li>
+                ) : (
+                  Object.entries(deviceType).map(([device, count]) => (
+                    <li key={device}>
+                      {device.charAt(0).toUpperCase() + device.slice(1)}: {count}
+                    </li>
+                  ))
+                )}
               </ul>
             </div>
             <div>
               <h3 className="font-medium">By Referrer</h3>
               <ul className="mt-2 space-y-1 text-sm">
-                {Object.entries(metrics.referral_source).map(([ref, count]) => (
-                  <li key={ref}>
-                    {ref.charAt(0).toUpperCase() + ref.slice(1)}: {count}
-                  </li>
-                ))}
+                {Object.entries(referralSource).length === 0 ? (
+                  <li>No data</li>
+                ) : (
+                  Object.entries(referralSource).map(([ref, count]) => (
+                    <li key={ref}>
+                      {ref.charAt(0).toUpperCase() + ref.slice(1)}: {count}
+                    </li>
+                  ))
+                )}
               </ul>
             </div>
           </div>
         </section>
-
-        {/* your existing nav/resources… */}
-        <nav className="flex flex-col items-center gap-4 rounded-3xl border border-gray-200 p-6 dark:border-gray-700">
-          <p className="leading-6 text-gray-700 dark:text-gray-200">
-            What&apos;s next?
-          </p>
-          <ul>
-            {resources.map(({ href, text, icon }) => (
-              <li key={href}>
-                <a
-                  className="group flex items-center gap-3 self-stretch p-3 leading-normal text-blue-700 hover:underline dark:text-blue-500"
-                  href={href}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {icon}
-                  {text}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </nav>
       </div>
     </div>
   );
 }
-
-const resources = [
-  /* … your existing resources … */
-];
