@@ -11,12 +11,10 @@ export const meta = () => {
 };
 
 export async function loader({ request }) {
-  // Fetch analytics from DB by ID
   const analytics = await prisma.analytics.findUnique({
     where: { id: process.env.ANALYTICS_ID },
   });
 
-  // Provide defaults if analytics record missing (for safety)
   return analytics ?? {
     total_visitors: 0,
     newVisitors: 0,
@@ -27,14 +25,11 @@ export async function loader({ request }) {
 }
 
 export default function Index() {
-  // Load initial analytics data from server loader
   const data = useLoaderData();
 
-  // Use state to allow live updates if needed
   const [metrics, setMetrics] = useState(data);
 
   useEffect(() => {
-    // Visitor ID logic to determine new or returning visitor
     let id = localStorage.getItem("visitorId");
     let isReturning = true;
 
@@ -44,7 +39,7 @@ export default function Index() {
       isReturning = false;
     }
 
-    // POST to /api/track to update analytics counters
+  
     fetch("/api/track", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -57,7 +52,6 @@ export default function Index() {
       .then((updatedAnalytics) => {
         console.log("✅ Analytics updated:", updatedAnalytics);
 
-        // Optionally update UI with latest data from response if sent back
         if (updatedAnalytics && typeof updatedAnalytics === 'object') {
           setMetrics((prev) => ({ ...prev, ...updatedAnalytics }));
         }
@@ -67,7 +61,7 @@ export default function Index() {
       });
   }, []);
 
-  // Helper to safely get values with fallback
+
   const totalVisitors = metrics.total_visitors ?? metrics.totalVisitors ?? 0;
   const newVisitors = metrics.new_visitors ?? metrics.newVisitors ?? 0;
   const sessionDuration = metrics.session_duration ?? 0;
