@@ -33,25 +33,40 @@ export default function App() {
   useEffect(() => {
     console.log("useEffect is working!");
 
-    const start = Date.now();
+    async function test(){
+      const url = '/api/trackduration.js';
+      await fetch(url, {
+        method: "POST",
+        body: {
+          duration: 6000
+        }
+      })
+    }
 
-    // Use sendBeacon to send data when page unloads (reliable for unload events)
-    const handleBeforeUnload = () => {
-      const duration = Math.round((Date.now() - start) / 60000);
-      console.log(`this is the duration: ${duration}`);
+    test();
 
-      const data = JSON.stringify({ duration });
-      const blob = new Blob([data], { type: "application/json" });
+    navigator.sendBeacon("/trackduration");
 
-      navigator.sendBeacon("/api/trackduration", blob);
-};
 
-    window.addEventListener("beforeunload", handleBeforeUnload);
+//     const start = Date.now();
 
-    // Cleanup event listener when component unmounts (best practice)
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
+//     // Use sendBeacon to send data when page unloads (reliable for unload events)
+//     const handleBeforeUnload = () => {
+//       const duration = Math.round((Date.now() - start) / 60000);
+//       console.log(`this is the duration: ${duration}`);
+
+//       const data = JSON.stringify({ duration });
+//       const blob = new Blob([data], { type: "application/json" });
+
+//       navigator.sendBeacon("/api/trackduration", blob);
+// };
+
+//     window.addEventListener("beforeunload", handleBeforeUnload);
+
+//     // Cleanup event listener when component unmounts (best practice)
+//     return () => {
+//       window.removeEventListener("beforeunload", handleBeforeUnload);
+//     };
   }, []);
 
   return (
