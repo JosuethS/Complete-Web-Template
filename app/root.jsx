@@ -4,10 +4,11 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  json,
 } from "@remix-run/react";
 import { useEffect } from "react";
 import "./tailwind.css";
-import { trackAnalytics } from "./api/analytics"; // This is a server utility, NOT a route!
+import { trackAnalytics } from "./api/analytics"; // Server utility
 
 export const links = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -23,10 +24,16 @@ export const links = () => [
   },
 ];
 
-// Run server-side analytics on every page load via loader
+// Server-side loader to run analytics and pass Set-Cookie if needed
 export const loader = async ({ request }) => {
-  await trackAnalytics({ request });
-  return { status: true };
+  const result = await trackAnalytics({ request });
+
+  return json(
+    { status: true },
+    {
+      headers: result?.headers || {},
+    }
+  );
 };
 
 export default function App() {
@@ -35,19 +42,16 @@ export default function App() {
 
     const start = Date.now();
 
-    // Use sendBeacon to send data when page unloads (reliable for unload events)
     const handleBeforeUnload = () => {
       const duration = Math.round((Date.now() - start) / 60000);
       console.log(`this is the duration: ${duration}`);
 
       const data = JSON.stringify({ duration });
-
       navigator.sendBeacon("/api/trackduration", data);
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
 
-    // Cleanup event listener when component unmounts (best practice)
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
