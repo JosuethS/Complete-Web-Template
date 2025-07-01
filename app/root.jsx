@@ -7,7 +7,7 @@ import {
 } from "@remix-run/react";
 import { useEffect } from "react";
 import "./tailwind.css";
-import { trackAnalytics } from "./routes/api/analytics"; // This is a server utility, NOT a route!
+import { trackAnalytics } from "./api/analytics"; // This is a server utility, NOT a route!
 
 export const links = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -33,40 +33,24 @@ export default function App() {
   useEffect(() => {
     console.log("useEffect is working!");
 
-    async function test(){
-      const url = '/api/trackduration.js';
-      await fetch(url, {
-        method: "POST",
-        body: {
-          duration: 6000
-        }
-      })
-    }
+    const start = Date.now();
 
-    test();
+    // Use sendBeacon to send data when page unloads (reliable for unload events)
+    const handleBeforeUnload = () => {
+      const duration = Math.round((Date.now() - start) / 60000);
+      console.log(`this is the duration: ${duration}`);
 
-    navigator.sendBeacon("/trackduration");
+      const data = JSON.stringify({ duration });
 
+      navigator.sendBeacon("/api/trackduration", data);
+    };
 
-//     const start = Date.now();
+    window.addEventListener("beforeunload", handleBeforeUnload);
 
-//     // Use sendBeacon to send data when page unloads (reliable for unload events)
-//     const handleBeforeUnload = () => {
-//       const duration = Math.round((Date.now() - start) / 60000);
-//       console.log(`this is the duration: ${duration}`);
-
-//       const data = JSON.stringify({ duration });
-//       const blob = new Blob([data], { type: "application/json" });
-
-//       navigator.sendBeacon("/api/trackduration", blob);
-// };
-
-//     window.addEventListener("beforeunload", handleBeforeUnload);
-
-//     // Cleanup event listener when component unmounts (best practice)
-//     return () => {
-//       window.removeEventListener("beforeunload", handleBeforeUnload);
-//     };
+    // Cleanup event listener when component unmounts (best practice)
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
   }, []);
 
   return (
